@@ -48,7 +48,7 @@ def answer_call():
     
     with resp.gather(numDigits=1, action="/select_caller_language",
                      method="POST") as g:
-        g.say("Please select your language: 1 for English and 2 for Mandarin", voice="alice")
+        g.say("Please select your language: 1 for English and 2 for Mandarin", voice="polly")
                      
     return str(resp)
 
@@ -60,7 +60,7 @@ def select_caller_language():
     
     with resp.gather(numDigits=1, action="/select_callee_language",
                      method="POST") as g:
-        g.say("Please select your friend's language: 1 for English and 2 for Mandarin", voice="alice")
+        g.say("Please select your friend's language: 1 for English and 2 for Mandarin", voice="polly")
                      
     return str(resp)
 
@@ -72,7 +72,7 @@ def select_callee_language():
     
     with resp.gather(numDigits=10, action="/connect_callee",
                      method="POST") as g:
-        g.say("Please enter 10 digit phone number", voice="alice")
+        g.say("Please enter 10 digit phone number", voice="polly")
                      
     return str(resp)
 
@@ -121,7 +121,7 @@ def handle_host_call_customer_service():
 def handle_on_caller_connect_robot():
     global current_bot_in_meeting
     resp = VoiceResponse()
-    resp.say("bot joins meeting 123 ", voice="alice")
+    resp.say("bot joins meeting 123 ", voice="polly")
     current_bot_in_meeting = "meeting123"
     print("before caller connect to robot 123")
     # put bot to meeting 123
@@ -139,7 +139,7 @@ return str(resp)
 def handle_on_callee_connect_robot():
     global current_bot_in_meeting
     resp = VoiceResponse()
-    resp.say("bot joins meeting 1234 ", voice="alice")
+    resp.say("bot joins meeting 1234 ", voice="polly")
     
     current_bot_in_meeting = "meeting1234"
     print("before callee connect to robot 1234")
@@ -163,16 +163,16 @@ def handle_robot():
     
     translator = Translator()
     if record_url != None:
-        resp.say("reply as follows",loop=1,voice='alice')
+        resp.say("reply as follows",loop=1,voice='polly')
         # "meeting1234" record: english
         #meeting123 record: chinese
         if current_bot_in_meeting:
             print("current meeting: " + current_bot_in_meeting + "record:" + record_url)
         if current_bot_in_meeting == "meeting1234":
             
-            resp.say(translator.translate(record_url, src=google_langs[callee_lang], dest=google_langs[caller_lang]).text,loop=1, voice='alice', language=alice_say_langs[caller_lang])
+            resp.say(translator.translate(record_url, src=google_langs[callee_lang], dest=google_langs[caller_lang]).text,loop=1, voice='polly', language=alice_say_langs[caller_lang])
         else:
-            resp.say(translator.translate(record_url, src=google_langs[caller_lang], dest=google_langs[callee_lang]).text,loop=1, voice='alice', language=alice_say_langs[callee_lang])
+            resp.say(translator.translate(record_url, src=google_langs[caller_lang], dest=google_langs[callee_lang]).text,loop=1, voice='polly', language=alice_say_langs[callee_lang])
         print("has record to play")
         print("record_url = " + record_url)
     
@@ -182,7 +182,7 @@ if current_bot_in_meeting == "meeting1234":
     gather = Gather(input='speech', action='/handle_transcribe', speechTimeout="auto",timeout= 4, language=alice_gather_langs[caller_lang])
     else:
         gather = Gather(input='speech', action='/handle_transcribe', speechTimeout="auto",timeout= 4, language=alice_gather_langs[callee_lang])
-gather.say("please reply",voice='alice')
+gather.say("please reply",voice='polly')
 resp.append(gather)
 print("bot hangs up the call")
 return str(resp)
@@ -222,7 +222,7 @@ return ""
 def response_call():
     x = request.form['SpeechResult']
     resp = VoiceResponse()
-    resp.say(x, voice='alice')
+    resp.say(x, voice='polly')
     return str(resp)
 
 if __name__ == "__main__":
