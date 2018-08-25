@@ -16,8 +16,17 @@ account_token = os.environ['TWILIO_AUTHY_TOKEN']
 conference_name = "meeting123"
 client = twilio.rest.Client(account_sid, account_token)
 hostUrl = "https://92974f61.ngrok.io"
-record_url = "start"
+record_url = None
 current_bot_in_meeting = None
+
+# chosen langs
+caller_lang = None
+callee_lang = None
+
+# Language Maps
+google_langs = {'1': 'en', '2': 'zh-cn'}
+alice_gather_langs = {'1': 'en-US', '2': 'cmn-Hans-CN'}
+alice_say_langs = {'1': 'en-US', '2': 'zh-CN'}
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -37,12 +46,35 @@ def sms_reply():
 def answer_call():
     resp = VoiceResponse()
     
-    with resp.gather(numDigits=10, action="/connect_callee",
+    with resp.gather(numDigits=1, action="/select_caller_language",
                      method="POST") as g:
-        g.say("Please Enter 10 digits phone number you want to call", voice="alice")
+        g.say("Please select your language: 1 for English and 2 for Mandarin", voice="alice")
                      
     return str(resp)
 
+@app.route('/select_caller_language', methods=['GET','POST'])
+def select_caller_language():
+    global caller_lang
+    caller_lang = request.values.get('Digits', None)
+    resp = VoiceResponse()
+    
+    with resp.gather(numDigits=1, action="/select_callee_language",
+                     method="POST") as g:
+        g.say("Please select your friend's language: 1 for English and 2 for Mandarin", voice="alice")
+                     
+    return str(resp)
+
+@app.route('/select_callee_language', methods=['GET','POST'])
+def select_callee_language():
+    global callee_lang
+    callee_lang = request.values.get('Digits', None)
+    resp = VoiceResponse()
+    
+    with resp.gather(numDigits=10, action="/connect_callee",
+                     method="POST") as g:
+        g.say("Please enter 10 digit phone number", voice="alice")
+                     
+    return str(resp)
 
 # call callee and put caller in meeting 123
 @app.route('/connect_callee', methods=['GET','POST'])
@@ -97,7 +129,7 @@ def handle_on_caller_connect_robot():
         d.conference(name="meeting123", muted=False, beep='onEnter',
                      statusCallbackEvent="join leave", statusCallback="/voice/conference",
                      statusCallbackMethod="POST")
-
+    
     print("no sth to play")
 
 
@@ -137,18 +169,19 @@ def handle_robot():
         if current_bot_in_meeting:
             print("current meeting: " + current_bot_in_meeting + "record:" + record_url)
         if current_bot_in_meeting == "meeting1234":
-            resp.say(translator.translate(record_url, src='en', dest='zh-cn').text,loop=1, voice='alice', language='zh-CN')
+            
+            resp.say(translator.translate(record_url, src=google_langs[callee_lang], dest=google_langs[caller_lang]).text,loop=1, voice='alice', language=alice_say_langs[caller_lang])
         else:
-            resp.say(translator.translate(record_url, src='zh-cn', dest='en').text,loop=1, voice='alice', language='en-US')
+            resp.say(translator.translate(record_url, src=google_langs[caller_lang], dest=google_langs[callee_lang]).text,loop=1, voice='alice', language=alice_say_langs[callee_lang])
         print("has record to play")
         print("record_url = " + record_url)
     
     print("no sth to play")
 
 if current_bot_in_meeting == "meeting1234":
-    gather = Gather(input='speech', action='/handle_transcribe', speechTimeout="auto",timeout= 4, language='cmn-Hans-CN')
+    gather = Gather(input='speech', action='/handle_transcribe', speechTimeout="auto",timeout= 4, language=alice_gather_langs[caller_lang])
     else:
-        gather = Gather(input='speech', action='/handle_transcribe', speechTimeout="auto",timeout= 4, language='en-US')
+        gather = Gather(input='speech', action='/handle_transcribe', speechTimeout="auto",timeout= 4, language=alice_gather_langs[callee_lang])
 gather.say("please reply",voice='alice')
 resp.append(gather)
 print("bot hangs up the call")
